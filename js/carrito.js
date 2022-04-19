@@ -18,14 +18,14 @@ const contenedorItemsCarrito = document.querySelector('.contenedorItemsCarrito')
 
 
 function agregarAlCarritoClickeado(event) {
-
     const boton = event.target;
     const contenido = boton.closest('.contenido');
 
     const titulo = contenido.querySelector('.titulo').textContent;
     const precio = contenido.querySelector('.precio').textContent;
     const imagen = contenido.querySelector('.imagenProducto').src;
-
+    carrito.push({titulo,precio,imagen})
+    guardarStorage();
     agregarItemAlCarrito(titulo, precio, imagen);
 
 }
@@ -77,6 +77,7 @@ function agregarItemAlCarrito(titulo, precio, imagen) {
     filaCarrito.querySelector('.cantidadItemCarrito').addEventListener('change', cantidadCambiada);
 
     actualizarTotalCarrito();
+
 }
 
 function actualizarTotalCarrito() {
@@ -96,6 +97,7 @@ function actualizarTotalCarrito() {
     });
 
     totalCarrito.innerHTML = `${total}$&nbsp;`;
+
 }
 
 function removerItemCarrito(event) {
@@ -114,7 +116,10 @@ function cantidadCambiada(event) {
         input.value = 1;
     }
     actualizarTotalCarrito();
+
 }
 
 /*localstorage*/
-localStorage.setItem("carrito", JSON.stringify(carrito));
+function guardarStorage(){
+    localStorage.setItem("carrito", JSON.stringify(carrito));
+}
