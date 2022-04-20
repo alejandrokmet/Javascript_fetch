@@ -1,125 +1,158 @@
-const carrito = validarStorage();
+//SELECCIONAR ELEMENTOS
 
-function validarStorage() {
-    if (localStorage.getItem("carrito") != null) {
-        const storageProd = JSON.parse(localStorage.getItem("carrito"));
-        return storageProd;
+const elementoProducto = document.querySelector(".galeria");
+const elementosCarrito = document.querySelector(".contenedorItemsCarrito");
+const totalCarrito = document.querySelector(".totalCarrito");
+
+//RENDERIZAR PRODUCTOS
+
+function renderizarProducto() {
+    productos.forEach((producto) => {
+        elementoProducto.innerHTML +=
+            `
+        <div class="contenido d-flex flex-column">
+
+            <img class="imagenProducto" src="${producto.imagenProducto}">
+            <h3 class="titulo" >${producto.titulo}</h3>
+            <p class="desc">${producto.desc}</p>
+            <h6 class="precio">${producto.precio}</h6>
+            <ul>
+                <li><i class="fa fa-star checked"></i></li>
+                <li><i class="fa fa-star checked"></i></li>
+                <li><i class="fa fa-star checked"></i></li>
+                <li><i class="fa fa-star checked"></i></li>
+                <li><i class="fa fa-star checked"></i></li>
+
+            </ul>
+            <button class="boton" onclick="agregarAlCarrito(${producto.id})">
+            Agregar al Carrito
+        </button>
+        </div>`
+
+    })
+
+}
+renderizarProducto();
+
+//ARRAY CARRITO
+let carrito = JSON.parse(localStorage.getItem("CARRITO")) || [];
+actualizarCarrito();
+
+
+//AGREGAR AL CARRITO
+
+function agregarAlCarrito(id) {
+
+    //REVISA SI ELPRODUCTO YA ESTÁ EN ELCARRITO
+    if (carrito.some((item) => item.id === id)) {
+     cambiarUnidades("plus", id)
     } else {
-        return [];
+
+        const item = productos.find((producto) => producto.id === id)
+        carrito.push({
+            ...item,
+            cantidad: 1
+        });
+
+
     }
+    actualizarCarrito();
+}
+//ACTUALIZA EL CARRITO
+
+function actualizarCarrito() {
+
+    renderizarItemsCarrito();
+    renderizarTotal();
+
+    //GUARDA EL CARRITO  EN EL LOCALSTORAGE
+    localStorage.setItem("CARRITO", JSON.stringify(carrito))
 }
 
+//RENDERIZA LOS ITEMS DEL CARRITO
+function renderizarItemsCarrito() {
+    elementosCarrito.innerHTML = "";
+    carrito.forEach((item) => {
 
-const BotonAgregarAlCarrito = document.querySelectorAll('.boton');
-BotonAgregarAlCarrito.forEach(AgregarAlCarrito => {
-    AgregarAlCarrito.addEventListener('click', agregarAlCarritoClickeado);
-});
-const contenedorItemsCarrito = document.querySelector('.contenedorItemsCarrito');
-
-
-function agregarAlCarritoClickeado(event) {
-    const boton = event.target;
-    const contenido = boton.closest('.contenido');
-
-    const titulo = contenido.querySelector('.titulo').textContent;
-    const precio = contenido.querySelector('.precio').textContent;
-    const imagen = contenido.querySelector('.imagenProducto').src;
-    carrito.push({titulo,precio,imagen})
-    guardarStorage();
-    agregarItemAlCarrito(titulo, precio, imagen);
-
-}
-
-
-function agregarItemAlCarrito(titulo, precio, imagen) {
-
-    const tituloItemCarrito = contenedorItemsCarrito.getElementsByClassName('tituloItemCarrito');
-    for (let i = 0; i < tituloItemCarrito.length; i++) {
-        if (tituloItemCarrito[i].innerText === titulo) {
-            let cantidadElementos = tituloItemCarrito[i].parentElement.parentElement.parentElement.querySelector('.cantidadItemCarrito');
-            cantidadElementos.value++;
-            actualizarTotalCarrito();
-            return;
-        }
-    }
-    
-
-
-
-    const filaCarrito = document.createElement('div');
-    const contenidoCarrito = `<div class="row itemsCarrito">
+        elementosCarrito.innerHTML +=
+            `<div class="row itemsCarrito">
     <div class="col-6">
         <div class="shopping-cart-item d-flex align-items-center h-100 border-bottom pb-2 pt-3">
-            <img src=${imagen} class="shopping-cart-image">
-            <h6 class="shopping-cart-item-title tituloItemCarrito text-truncate ml-3 mb-0">${titulo}</h6>
+            <img src=${item.imagenProducto} class="shopping-cart-image">
+            <h6 class="shopping-cart-item-title tituloItemCarrito text-truncate ml-3 mb-0">${item.titulo}</h6>
         </div>
     </div>
     <div class="col-2">
         <div class="shopping-cart-price d-flex align-items-center h-100 border-bottom pb-2 pt-3">
-            <p class="item-price mb-0 precioItemCarrito">${precio}</p>
+            <p class="item-price mb-0 precioItemCarrito">${item.precio}</p>
         </div>
     </div>
-    <div class="col-4">
-        <div
-            class="shopping-cart-quantity d-flex justify-content-between align-items-center h-100 border-bottom pb-2 pt-3">
-            <input class="shopping-cart-quantity-input cantidadItemCarrito" type="number"
-                value="1">
-            <button class="btn btn-danger botonBorrar" type="button">X</button>
+    <div class="col-4 ">
+        <div class="units d-flex flex-row">
+        <div class="btn minus" onclick="cambiarUnidades('minus', ${item.id})">-</div>
+        <div class="number">${item.cantidad}</div>
+     <div class="btn plus" onclick="cambiarUnidades('plus', ${item.id})">+</div>
+     <button class="btn btn-danger botonBorrar" onclick="removerItem(${item.id})"type="button">X</button>          
+    </div>
+        <div>
+            
         </div>
     </div>
-</div>`;
+</div>`
 
-    filaCarrito.innerHTML = contenidoCarrito;
-    contenedorItemsCarrito.append(filaCarrito);
+    })
+}
+//CAMBIAR NUMERO DE UNIDADES
 
-    filaCarrito.querySelector('.botonBorrar').addEventListener('click', removerItemCarrito);
+function cambiarUnidades(action, id) {
 
-    filaCarrito.querySelector('.cantidadItemCarrito').addEventListener('change', cantidadCambiada);
+    carrito = carrito.map((item) => {
 
-    actualizarTotalCarrito();
+        let cantidad = item.cantidad;
+        if (item.id === id) {
+            if (action === "minus" && cantidad>1) {
+                cantidad--;
+            } else if (action === "plus") {
+                cantidad++;
+            }
+        }
+        return{
+            ...item,
+            cantidad,
 
+        }
+    })
+
+    actualizarCarrito();
 }
 
-function actualizarTotalCarrito() {
-    let total = 0;
-    const totalCarrito = document.querySelector('.totalCarrito');
-    const itemsCarrito = document.querySelectorAll('.itemsCarrito');
+//CALCULA EL TOTAL
+function renderizarTotal(){
 
-    itemsCarrito.forEach((itemsCarrito) => {
-        const precioElementoItemCarrito = itemsCarrito.querySelector('.precioItemCarrito');
-        const precioItemCarrito = Number(precioElementoItemCarrito.textContent.replace('$', ''));
+    let precioTotal = 0;
+    let itemsTotales = 0;
 
-        const cantidadElementoItemCarrito = itemsCarrito.querySelector('.cantidadItemCarrito');
-        const cantidadItemCarrito = Number(cantidadElementoItemCarrito.value);
-        total = total + precioItemCarrito * cantidadItemCarrito;
+    carrito.forEach((item)=>{
+
+        precioTotal+= item.precio * item.cantidad;
+        itemsTotales+= item.cantidad;
 
 
     });
-
-    totalCarrito.innerHTML = `${total}$&nbsp;`;
-
-}
-
-function removerItemCarrito(event) {
-
-    const botonApretado = event.target;
-    botonApretado.closest('.itemsCarrito').remove();
-    actualizarTotalCarrito();
-
+    totalCarrito.innerHTML = `Total (${itemsTotales} items): $${precioTotal}`;
 
 }
 
-function cantidadCambiada(event) {
+//REMOVER ITEMS DEL CARRITO
 
-    const input = event.target;
-    if (input.value <= 0) {
-        input.value = 1;
-    }
-    actualizarTotalCarrito();
-
+function removerItem(id){
+   carrito= carrito.filter ((item)=> item.id !== id)
+    actualizarCarrito();
 }
 
-/*localstorage*/
-function guardarStorage(){
-    localStorage.setItem("carrito", JSON.stringify(carrito));
-}
+//FETCH
+
+const dolar=document.querySelector(".dolar")
+fetch('/js/dolar.json')
+.then(resp=>resp.json())
+.then(data=>dolar.innerHTML=`TOMAMOS DOLARES AL PRECIO DEL DIA. LA COTIZACIÓN ACTUAL ES DE ${data.precio}`)
